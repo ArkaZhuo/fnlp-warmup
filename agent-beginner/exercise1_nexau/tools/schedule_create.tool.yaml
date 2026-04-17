@@ -1,0 +1,41 @@
+type: tool
+name: schedule_create
+description: >-
+  Create a new schedule event. Provide start_time and end_time as explicit datetimes.
+  If there is a conflict, retry with allow_conflict=true only after user confirmation.
+input_schema:
+  type: object
+  properties:
+    title:
+      type: string
+      description: Event title
+    start_time:
+      type: string
+      description: Event start time, e.g. 2026-04-10 10:00
+    end_time:
+      type: string
+      description: Event end time, optional
+    timezone:
+      type: string
+      description: IANA timezone, default Asia/Shanghai
+    description:
+      type: string
+    location:
+      type: string
+    source_type:
+      type: string
+      description: manual/chat/markdown/feishu_markdown
+    source_ref:
+      type: string
+    source_line:
+      type: integer
+    default_duration_minutes:
+      type: integer
+      minimum: 1
+    allow_conflict:
+      type: boolean
+  required:
+    - title
+    - start_time
+  additionalProperties: false
+  $schema: http://json-schema.org/draft-07/schema#

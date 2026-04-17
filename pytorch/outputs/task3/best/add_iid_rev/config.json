@@ -1,0 +1,21 @@
+{
+  "train_tsv": "/home/df_05/A_fnlp/pytorch/data/task3/add_train_iid.tsv",
+  "test_tsv": "/home/df_05/A_fnlp/pytorch/data/task3/add_test_iid.tsv",
+  "seed": 42,
+  "max_src_len": 16,
+  "max_tgt_len": 16,
+  "d_model": 128,
+  "nhead": 4,
+  "enc_layers": 2,
+  "dec_layers": 2,
+  "ff_dim": 256,
+  "dropout": 0.1,
+  "batch_size": 128,
+  "epochs": 30,
+  "lr": 0.001,
+  "device": "cpu",
+  "save_dir": "outputs/task3/best",
+  "run_name": "add_iid_rev",
+  "reverse_src": true,
+  "reverse_tgt": true
+}

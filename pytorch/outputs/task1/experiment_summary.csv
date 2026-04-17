@@ -1,0 +1,3 @@
+run_name,feature_mode,loss,lr,best_val_acc,test_acc,vocab_size
+exp_01_bow_ce_lr0.5,bow,ce,0.5,0.34466588511137164,0.36355394378966455,1200.0
+exp_02_ngram_ce_lr0.5,ngram,ce,0.5,0.3540445486518171,0.36778482925355094,1200.0

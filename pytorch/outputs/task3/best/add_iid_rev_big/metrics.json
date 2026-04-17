@@ -1,0 +1,8 @@
+{
+  "best_epoch": 13,
+  "best_test_exact": 0.0016666666666666668,
+  "num_train": 8000,
+  "num_test": 1200,
+  "vocab_size": 14,
+  "device_used": "cpu"
+}

@@ -1,0 +1,27 @@
+type: tool
+name: schedule_query
+description: >-
+  Query schedule events by keyword and/or time range. Use this before update/delete
+  when event_id is unknown.
+input_schema:
+  type: object
+  properties:
+    keyword:
+      type: string
+    start_from:
+      type: string
+      description: Range start time
+    end_to:
+      type: string
+      description: Range end time
+    timezone:
+      type: string
+      description: IANA timezone, default Asia/Shanghai
+    include_cancelled:
+      type: boolean
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 200
+  additionalProperties: false
+  $schema: http://json-schema.org/draft-07/schema#

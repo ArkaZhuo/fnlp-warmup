@@ -1,0 +1,33 @@
+{
+  "train_path": "/home/df_05/A_fnlp/pytorch/data/new_train.tsv",
+  "test_path": "/home/df_05/A_fnlp/pytorch/data/new_test.tsv",
+  "model_name": "cnn",
+  "val_ratio": 0.1,
+  "seed": 42,
+  "min_freq": 2,
+  "vocab_size": 30000,
+  "max_len": 80,
+  "embed_dim": 50,
+  "batch_size": 128,
+  "epochs": 4,
+  "lr": 0.001,
+  "optimizer": "adam",
+  "loss_name": "ce",
+  "weight_decay": 0.0,
+  "num_kernels": 64,
+  "kernel_sizes": [
+    3,
+    4,
+    5
+  ],
+  "hidden_dim": 128,
+  "nhead": 4,
+  "num_layers": 2,
+  "ff_dim": 256,
+  "dropout": 0.3,
+  "glove_path": "/home/df_05/A_fnlp/pytorch/data/glove/glove.6B.50d.txt",
+  "freeze_embedding": false,
+  "device": "cpu",
+  "save_dir": "/home/df_05/A_fnlp/pytorch/outputs/task2/req",
+  "run_name": "req_cnn_ce_adam_lr1e3_glove50d"
+}

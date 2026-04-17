@@ -1,0 +1,23 @@
+{
+  "task_name": "Task6-Humanoid-RL-Control-Teleop-Imitation",
+  "seed": 42,
+  "demo_episodes": 10,
+  "imitation_train_samples": 1200,
+  "imitation_train_mse": 0.0006597457104362547,
+  "teleop_tracking_mse": 0.01876458093213954,
+  "imitation_tracking_mse": 0.0996137580764092,
+  "rl_tracking_mse": 0.09194876840136325,
+  "rl_improvement_vs_imitation": 0.007664989675045947,
+  "rl_training_curve": [
+    {
+      "episode": 1.0,
+      "tracking_mse": 0.07654253399426428,
+      "epsilon": 0.995
+    },
+    {
+      "episode": 20.0,
+      "tracking_mse": 0.0832720310667355,
+      "epsilon": 0.9046104802746175
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "task_name": "Task5-LLM-VLM-Planning-Benchmark",
+  "seed": 42,
+  "desktop_zero_shot": {
+    "success_rate": 0.9727272727272728,
+    "avg_steps": 13.536363636363637
+  },
+  "desktop_icl": {
+    "success_rate": 1.0,
+    "avg_steps": 11.736363636363636
+  },
+  "desktop_cot": {
+    "success_rate": 1.0,
+    "avg_steps": 11.736363636363636
+  },
+  "desktop_sft": {
+    "success_rate": 0.9590909090909091,
+    "avg_steps": 14.45
+  },
+  "scene_zero_shot": {
+    "success_rate": 0.7730769230769231,
+    "avg_steps": 29.23076923076923
+  },
+  "scene_icl": {
+    "success_rate": 1.0,
+    "avg_steps": 15.069230769230769
+  },
+  "scene_cot": {
+    "success_rate": 1.0,
+    "avg_steps": 15.069230769230769
+  },
+  "scene_sft": {
+    "success_rate": 0.7846153846153846,
+    "avg_steps": 28.630769230769232
+  },
+  "sft_train_accuracy": 0.9544096492198738,
+  "complexity_curve": [
+    {
+      "level": 1.0,
+      "grid_size": 5.0,
+      "wall_density": 0.02,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 1.0,
+      "zero_shot_avg_steps": 9.5,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 9.5,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 9.5,
+      "sft_success_rate": 1.0,
+      "sft_avg_steps": 9.5
+    },
+    {
+      "level": 2.0,
+      "grid_size": 6.0,
+      "wall_density": 0.06,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 0.975,
+      "zero_shot_avg_steps": 13.89375,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 11.2375,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 11.2375,
+      "sft_success_rate": 0.94375,
+      "sft_avg_steps": 17.35625
+    },
+    {
+      "level": 3.0,
+      "grid_size": 7.0,
+      "wall_density": 0.12,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 0.88125,
+      "zero_shot_avg_steps": 25.3875,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 13.0125,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 13.0125,
+      "sft_success_rate": 0.89375,
+      "sft_avg_steps": 24.45625
+    },
+    {
+      "level": 4.0,
+      "grid_size": 8.0,
+      "wall_density": 0.18,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 0.7375,
+      "zero_shot_avg_steps": 41.53125,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 14.575,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 14.575,
+      "sft_success_rate": 0.79375,
+      "sft_avg_steps": 35.98125
+    },
+    {
+      "level": 5.0,
+      "grid_size": 9.0,
+      "wall_density": 0.22,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 0.63125,
+      "zero_shot_avg_steps": 53.93125,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 17.05,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 17.05,
+      "sft_success_rate": 0.6625,
+      "sft_avg_steps": 50.85
+    },
+    {
+      "level": 6.0,
+      "grid_size": 10.0,
+      "wall_density": 0.26,
+      "task_count": 160.0,
+      "zero_shot_success_rate": 0.5,
+      "zero_shot_avg_steps": 68.4625,
+      "icl_success_rate": 1.0,
+      "icl_avg_steps": 19.4875,
+      "cot_success_rate": 1.0,
+      "cot_avg_steps": 19.4875,
+      "sft_success_rate": 0.475,
+      "sft_avg_steps": 70.95625
+    }
+  ]
+}

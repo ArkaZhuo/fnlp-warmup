@@ -1,0 +1,9 @@
+{
+  "best_epoch": 4,
+  "best_val_loss": 2.389861447470529,
+  "best_val_ppl": 10.911981955598058,
+  "num_train_seq": 11597,
+  "num_val_seq": 1288,
+  "vocab_size": 84,
+  "device_used": "cpu"
+}

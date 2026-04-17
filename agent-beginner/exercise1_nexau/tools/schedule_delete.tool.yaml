@@ -1,0 +1,15 @@
+type: tool
+name: schedule_delete
+description: >-
+  Cancel an event by event_id. Must set confirm=true after explicit user confirmation.
+input_schema:
+  type: object
+  properties:
+    event_id:
+      type: string
+    confirm:
+      type: boolean
+  required:
+    - event_id
+  additionalProperties: false
+  $schema: http://json-schema.org/draft-07/schema#

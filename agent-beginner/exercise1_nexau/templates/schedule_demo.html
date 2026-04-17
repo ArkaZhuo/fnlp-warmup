@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练习一：个人日程助手演示</title>
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --panel: #fffaf0;
+        --ink: #1f2521;
+        --muted: #69706a;
+        --line: #d8cdb8;
+        --brand: #176b5d;
+        --brand-dark: #0d433a;
+        --warn: #a6422a;
+        --soft: #e9dfca;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Georgia", "Times New Roman", "Noto Serif CJK SC", serif;
+        background:
+          radial-gradient(circle at 10% 10%, rgba(23, 107, 93, 0.16), transparent 30%),
+          linear-gradient(135deg, #efe4cf 0%, #f7f0e4 46%, #e6d8bd 100%);
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 36px 28px;
+      }
+
+      .shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 20px;
+        align-items: stretch;
+        margin-bottom: 22px;
+      }
+
+      .card {
+        background: rgba(255, 250, 240, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: 0 18px 50px rgba(72, 57, 29, 0.13);
+      }
+
+      .intro {
+        padding: 30px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(30px, 4vw, 54px);
+        line-height: 1.02;
+        letter-spacing: -1.4px;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      .meta {
+        padding: 24px;
+        display: grid;
+        gap: 12px;
+        align-content: center;
+      }
+
+      .meta-row {
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: var(--soft);
+        color: var(--brand-dark);
+        font-size: 14px;
+        word-break: break-all;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 20px;
+      }
+
+      .wide {
+        margin-bottom: 20px;
+      }
+
+      .section {
+        padding: 24px;
+      }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 24px;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px 13px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--ink);
+        background: #fffdf7;
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 78px;
+        resize: vertical;
+      }
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 11px 16px;
+        color: #fff;
+        background: var(--brand);
+        cursor: pointer;
+        font: 700 14px "Georgia", "Times New Roman", serif;
+        transition: transform 0.16s ease, background 0.16s ease;
+      }
+
+      button:hover {
+        background: var(--brand-dark);
+        transform: translateY(-1px);
+      }
+
+      button.secondary {
+        color: var(--brand-dark);
+        background: var(--soft);
+      }
+
+      button.danger {
+        background: var(--warn);
+      }
+
+      .status {
+        margin-top: 14px;
+        min-height: 28px;
+        color: var(--muted);
+        font-size: 14px;
+        white-space: pre-wrap;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 14px;
+      }
+
+      .toolbar > div {
+        flex: 1;
+      }
+
+      .event-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .event {
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #fffdf7;
+      }
+
+      .event.cancelled {
+        opacity: 0.58;
+      }
+
+      .event-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 800;
+        font-size: 17px;
+      }
+
+      .event-time {
+        margin-top: 7px;
+        color: var(--brand-dark);
+        font-size: 14px;
+      }
+
+      .event-desc {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .event-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: var(--soft);
+        color: var(--brand-dark);
+        font-size: 12px;
+      }
+
+      @media (max-width: 880px) {
+        .hero,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .page {
+          padding: 20px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="shell">
+        <section class="hero">
+          <div class="card intro">
+            <h1>个人日程助手演示</h1>
+            <p class="subtitle">
+              这个页面直接调用练习一的日程工具，方便展示从飞书文档或 Markdown 笔记同步日程，并继续创建、查询、修改、取消日程。
+            </p>
+          </div>
+          <div class="card meta">
+            <div class="meta-row">时区：{{ timezone }}</div>
+            <div class="meta-row">数据库：{{ db_path }}</div>
+            <div class="meta-row">示例笔记：{{ sample_notes_path }}</div>
+          </div>
+        </section>
+
+        <section class="card section wide">
+          <h2>从飞书文档同步日程</h2>
+          <label for="feishuUrl">飞书 docx/wiki 链接</label>
+          <input id="feishuUrl" value="https://wcnmcvjcsxin.feishu.cn/wiki/GpwnwG2UQiZ0bukNKDLcqoHvntd" />
+          <label for="feishuCalendarId">飞书日历 ID（默认 primary）</label>
+          <input id="feishuCalendarId" value="primary" />
+          <div class="buttons">
+            <button onclick="importFeishu()">同步飞书文档并写入飞书日历</button>
+            <button class="secondary" onclick="importSample()">导入示例 Markdown</button>
+            <button class="secondary" onclick="resetDemo()">清空演示数据</button>
+          </div>
+          <div id="ingestStatus" class="status"></div>
+        </section>
+
+        <section class="grid">
+          <div class="card section">
+            <h2>创建日程</h2>
+            <label for="title">标题</label>
+            <input id="title" value="项目复盘会议" />
+
+            <label for="startTime">开始时间</label>
+            <input id="startTime" value="2026-04-18 10:00" />
+
+            <label for="endTime">结束时间</label>
+            <input id="endTime" value="2026-04-18 11:00" />
+
+            <label for="location">地点</label>
+            <input id="location" value="线上会议" />
+
+            <label for="description">说明</label>
+            <textarea id="description">演示从网页界面创建日程</textarea>
+
+            <div class="buttons">
+              <button onclick="createEvent()">创建日程</button>
+            </div>
+            <div id="formStatus" class="status"></div>
+          </div>
+
+          <div class="card section">
+            <h2>日程列表与修改</h2>
+            <div class="toolbar">
+              <div>
+                <label for="keyword">关键词过滤</label>
+                <input id="keyword" placeholder="例如：复盘 / 客户 / 会议" />
+              </div>
+              <button onclick="loadEvents()">查询</button>
+              <button class="secondary" onclick="clearKeywordAndLoad()">显示全部</button>
+            </div>
+            <div id="listStatus" class="status"></div>
+            <div id="eventList" class="event-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const timezone = "{{ timezone }}";
+
+      function setStatus(id, text) {
+        document.getElementById(id).textContent = text || "";
+      }
+
+      async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+          headers: { "Content-Type": "application/json" },
+          ...options,
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(JSON.stringify(payload.detail || payload, null, 2));
+        }
+        return payload;
+      }
+
+      async function createEvent() {
+        try {
+          const payload = await requestJson("/api/events", {
+            method: "POST",
+            body: JSON.stringify({
+              title: document.getElementById("title").value,
+              start_time: document.getElementById("startTime").value,
+              end_time: document.getElementById("endTime").value,
+              timezone,
+              location: document.getElementById("location").value,
+              description: document.getElementById("description").value,
+            }),
+          });
+          setStatus("formStatus", `创建成功：${payload.event.title}`);
+          document.getElementById("keyword").value = "";
+          await loadEvents();
+        } catch (error) {
+          setStatus("formStatus", `创建失败：${error.message}`);
+        }
+      }
+
+      async function importSample() {
+        try {
+          const payload = await requestJson("/api/demo/import-sample", { method: "POST" });
+          setStatus(
+            "ingestStatus",
+            `导入完成：新增 ${payload.created_count} 条，更新 ${payload.updated_count} 条，跳过 ${payload.skipped_count} 条`
+          );
+          document.getElementById("keyword").value = "";
+          await loadEvents();
+        } catch (error) {
+          setStatus("ingestStatus", `导入失败：${error.message}`);
+        }
+      }
+
+      async function importFeishu() {
+        try {
+          const payload = await requestJson("/api/demo/import-feishu", {
+            method: "POST",
+            body: JSON.stringify({
+              document_url: document.getElementById("feishuUrl").value,
+              mode: "upsert",
+              timezone,
+              sync_feishu_calendar: true,
+              feishu_calendar_id: document.getElementById("feishuCalendarId").value || "primary",
+            }),
+          });
+          const syncInfo = payload.feishu_calendar_sync || {};
+          setStatus(
+            "ingestStatus",
+            `飞书同步完成：新增 ${payload.created_count} 条，更新 ${payload.updated_count} 条，跳过 ${payload.skipped_count} 条；日历写入新增 ${syncInfo.synced_created_count || 0} 条，更新 ${syncInfo.synced_updated_count || 0} 条`
+          );
+          document.getElementById("keyword").value = "";
+          await loadEvents();
+        } catch (error) {
+          setStatus("ingestStatus", `飞书同步失败：${error.message}`);
+        }
+      }
+
+      async function resetDemo() {
+        try {
+          await requestJson("/api/demo/reset", { method: "POST" });
+          setStatus("ingestStatus", "演示数据已清空");
+          document.getElementById("keyword").value = "";
+          await loadEvents();
+        } catch (error) {
+          setStatus("ingestStatus", `清空失败：${error.message}`);
+        }
+      }
+
+      async function loadEvents() {
+        try {
+          const keyword = encodeURIComponent(document.getElementById("keyword").value);
+          const payload = await requestJson(`/api/events?include_cancelled=true&keyword=${keyword}`);
+          renderEvents(payload.events || []);
+          setStatus("listStatus", `共查询到 ${payload.count} 条日程`);
+        } catch (error) {
+          setStatus("listStatus", `查询失败：${error.message}`);
+        }
+      }
+
+      async function clearKeywordAndLoad() {
+        document.getElementById("keyword").value = "";
+        await loadEvents();
+      }
+
+      async function updateEvent(eventId) {
+        const prefix = `edit-${eventId}`;
+        try {
+          const payload = await requestJson(`/api/events/${eventId}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              title: document.getElementById(`${prefix}-title`).value,
+              start_time: document.getElementById(`${prefix}-start`).value,
+              end_time: document.getElementById(`${prefix}-end`).value,
+              timezone,
+              location: document.getElementById(`${prefix}-location`).value,
+              description: document.getElementById(`${prefix}-description`).value,
+            }),
+          });
+          setStatus("listStatus", `修改成功：${payload.event.title}`);
+          await loadEvents();
+        } catch (error) {
+          setStatus("listStatus", `修改失败：${error.message}`);
+        }
+      }
+
+      async function cancelEvent(eventId) {
+        try {
+          const payload = await requestJson(`/api/events/${eventId}/cancel`, { method: "POST" });
+          setStatus("listStatus", `已取消：${payload.event.title}`);
+          await loadEvents();
+        } catch (error) {
+          setStatus("listStatus", `取消失败：${error.message}`);
+        }
+      }
+
+      function renderEvents(events) {
+        const list = document.getElementById("eventList");
+        list.innerHTML = "";
+        if (!events.length) {
+          list.innerHTML = '<div class="event">暂无日程，请先同步飞书文档、导入 Markdown 或手动创建。</div>';
+          return;
+        }
+
+        for (const event of events) {
+          const item = document.createElement("div");
+          item.className = `event ${event.status === "cancelled" ? "cancelled" : ""}`;
+          const prefix = `edit-${event.id}`;
+          item.innerHTML = `
+            <div class="event-title">
+              <span>${escapeHtml(event.title)}</span>
+              <span class="pill">${escapeHtml(event.status)}</span>
+            </div>
+            <div class="event-time">${escapeHtml(event.start_time)} -> ${escapeHtml(event.end_time)}</div>
+            <div class="event-desc">${escapeHtml(event.description || "")}</div>
+            <label>标题</label>
+            <input id="${prefix}-title" value="${escapeAttr(event.title)}" />
+            <label>开始时间</label>
+            <input id="${prefix}-start" value="${escapeAttr(event.start_time.slice(0, 16).replace("T", " "))}" />
+            <label>结束时间</label>
+            <input id="${prefix}-end" value="${escapeAttr(event.end_time.slice(0, 16).replace("T", " "))}" />
+            <label>地点</label>
+            <input id="${prefix}-location" value="${escapeAttr(event.location || "")}" />
+            <label>说明</label>
+            <textarea id="${prefix}-description">${escapeHtml(event.description || "")}</textarea>
+            <div class="event-actions">
+              <button onclick="updateEvent('${event.id}')">保存修改</button>
+              <button class="danger" onclick="cancelEvent('${event.id}')">取消日程</button>
+            </div>
+          `;
+          list.appendChild(item);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+
+      loadEvents();
+    </script>
+  </body>
+</html>

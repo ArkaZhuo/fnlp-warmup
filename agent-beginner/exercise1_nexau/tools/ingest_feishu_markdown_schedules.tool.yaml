@@ -1,0 +1,23 @@
+type: tool
+name: ingest_feishu_markdown_schedules
+description: >-
+  Parse a Feishu document exported as markdown and create or upsert schedule events.
+input_schema:
+  type: object
+  properties:
+    file_path:
+      type: string
+    timezone:
+      type: string
+    mode:
+      type: string
+      enum: [create, upsert]
+    default_duration_minutes:
+      type: integer
+      minimum: 1
+    allow_conflict:
+      type: boolean
+  required:
+    - file_path
+  additionalProperties: false
+  $schema: http://json-schema.org/draft-07/schema#

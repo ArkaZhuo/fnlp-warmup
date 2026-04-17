@@ -1,0 +1,31 @@
+type: tool
+name: ingest_feishu_doc_schedules
+description: >-
+  Read a Feishu Doc directly through Feishu Open Platform API and ingest schedule
+  lines into the database. Accepts document token, full Feishu docx URL, or wiki URL.
+input_schema:
+  type: object
+  properties:
+    document_id_or_url:
+      type: string
+      description: Feishu doc token like doxcnxxxx, docx URL, or wiki URL
+    timezone:
+      type: string
+    mode:
+      type: string
+      enum: [create, upsert]
+    default_duration_minutes:
+      type: integer
+      minimum: 1
+    allow_conflict:
+      type: boolean
+    app_id:
+      type: string
+      description: Optional; defaults to env FEISHU_APP_ID
+    app_secret:
+      type: string
+      description: Optional; defaults to env FEISHU_APP_SECRET
+  required:
+    - document_id_or_url
+  additionalProperties: false
+  $schema: http://json-schema.org/draft-07/schema#

@@ -1,0 +1,13 @@
+{
+  "best_epoch": 4,
+  "best_val_acc": 0.40093786635404455,
+  "test_loss": 1.3953191013486048,
+  "test_acc": 0.40556059232396496,
+  "vocab_size": 7691,
+  "num_classes": 5,
+  "num_train": 7675,
+  "num_val": 853,
+  "num_test": 3309,
+  "device_used": "cpu",
+  "loaded_glove_vectors": 0
+}

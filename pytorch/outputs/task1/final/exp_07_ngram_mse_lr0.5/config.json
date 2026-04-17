@@ -1,0 +1,19 @@
+{
+  "train_path": "/home/df_05/A_fnlp/pytorch/data/new_train.tsv",
+  "test_path": "/home/df_05/A_fnlp/pytorch/data/new_test.tsv",
+  "feature_mode": "ngram",
+  "ngram_n": 2,
+  "min_freq": 2,
+  "max_features": 8000,
+  "val_ratio": 0.1,
+  "seed": 42,
+  "batch_size": 128,
+  "epochs": 8,
+  "lr": 0.5,
+  "loss": "mse",
+  "weight_decay": 0.0,
+  "normalize": true,
+  "device": "cpu",
+  "save_dir": "outputs/task1/final",
+  "run_name": "exp_07_ngram_mse_lr0.5"
+}

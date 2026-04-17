@@ -1,0 +1,11 @@
+{
+  "best_epoch": 2,
+  "best_val_acc": 0.3552168815943728,
+  "test_loss": 12.814991134212399,
+  "test_acc": 0.36778482925355094,
+  "num_train": 7675,
+  "num_val": 853,
+  "num_test": 3309,
+  "vocab_size": 30000,
+  "num_classes": 5
+}

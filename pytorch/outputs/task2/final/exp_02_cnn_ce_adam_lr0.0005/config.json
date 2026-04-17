@@ -1,0 +1,33 @@
+{
+  "train_path": "/home/df_05/A_fnlp/pytorch/data/new_train.tsv",
+  "test_path": "/home/df_05/A_fnlp/pytorch/data/new_test.tsv",
+  "model_name": "cnn",
+  "val_ratio": 0.1,
+  "seed": 42,
+  "min_freq": 2,
+  "vocab_size": 30000,
+  "max_len": 60,
+  "embed_dim": 128,
+  "batch_size": 128,
+  "epochs": 2,
+  "lr": 0.0005,
+  "optimizer": "adam",
+  "loss_name": "ce",
+  "weight_decay": 0.0,
+  "num_kernels": 64,
+  "kernel_sizes": [
+    3,
+    4,
+    5
+  ],
+  "hidden_dim": 128,
+  "nhead": 4,
+  "num_layers": 2,
+  "ff_dim": 256,
+  "dropout": 0.3,
+  "glove_path": null,
+  "freeze_embedding": false,
+  "device": "cpu",
+  "save_dir": "outputs/task2/final",
+  "run_name": "exp_02_cnn_ce_adam_lr0.0005"
+}
