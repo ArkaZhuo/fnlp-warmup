@@ -111,6 +111,26 @@ class SchedulerToolsTests(unittest.TestCase):
         self.assertEqual(kind, "docx")
         self.assertEqual(token, "doxcnABC123")
 
+    def test_extract_titles_from_markdown_and_chat_are_clean(self) -> None:
+        markdown_candidate = st._extract_event_from_line(
+            "- 2026-04-10 10:00-11:00 项目复盘会议",
+            line_no=1,
+            timezone="Asia/Shanghai",
+            default_duration_minutes=60,
+        )
+        self.assertIsNotNone(markdown_candidate)
+        self.assertEqual(markdown_candidate["title"], "项目复盘会议")
+
+        chat_candidate = st._extract_event_from_line(
+            "[2026-04-09 18:02] 张三: 咱们 2026-04-13 10:00 开站会",
+            line_no=1,
+            timezone="Asia/Shanghai",
+            default_duration_minutes=60,
+            strip_chat_prefix=True,
+        )
+        self.assertIsNotNone(chat_candidate)
+        self.assertEqual(chat_candidate["title"], "开站会")
+
 
 if __name__ == "__main__":
     unittest.main()

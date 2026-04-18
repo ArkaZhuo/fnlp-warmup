@@ -19,3 +19,24 @@ pytorch/data/glove/
 agent-beginner/third_party/NexAU/
 agent-beginner/third_party/NexDR/
 agent-beginner/third_party/NEXPR/
+
+# Reports and generated artifacts
+EI-Beginner/final_report.md
+EI-Beginner/report.md
+EI-Beginner/request.md
+EI-Beginner/task*_report.md
+EI-Beginner/report_images/
+EI-Beginner/results/
+EI-Beginner/agent_exercise1/results/
+EI-Beginner/scripts/generate_report_figures.py
+
+agent-beginner/REPORT.md
+agent-beginner/AGENT_EXERCISE_FLOW_EXPLANATION.md
+agent-beginner/TECHNICAL_IMPLEMENTATION_GUIDE.md
+agent-beginner/reports/
+agent-beginner/exercise2_nexdr/reports/
+agent-beginner/exercise2_nexdr/workspaces/
+
+pytorch/report/
+pytorch/outputs/
+*.ipynb

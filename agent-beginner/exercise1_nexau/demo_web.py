@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,15 @@ class FeishuImportRequest(BaseModel):
     feishu_calendar_id: str | None = None
 
 
+class UnifiedIngestRequest(BaseModel):
+    source_type: str
+    source_value: str
+    mode: str = "upsert"
+    timezone: str = st.DEFAULT_TIMEZONE
+    sync_feishu_calendar: bool = False
+    feishu_calendar_id: str | None = None
+
+
 def _decode_tool_response(response: dict[str, str]) -> dict[str, Any]:
     payload = json.loads(response["content"])
     payload["return_display"] = response.get("returnDisplay")
@@ -56,6 +66,20 @@ def _clear_events(db_path: str) -> None:
     with sqlite3.connect(db_path) as conn:
         conn.execute("DELETE FROM events")
         conn.commit()
+
+
+def _write_temp_input(content: str, suffix: str) -> str:
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        suffix=suffix,
+        delete=False,
+    )
+    try:
+        tmp.write(content)
+        return tmp.name
+    finally:
+        tmp.close()
 
 
 def create_app(
@@ -177,6 +201,67 @@ def create_app(
             feishu_calendar_id=body.feishu_calendar_id,
             db_path=resolved_db_path,
         )
+        payload = _decode_tool_response(response)
+        if not payload.get("ok"):
+            raise HTTPException(status_code=400, detail=payload)
+        return payload
+
+    @app.post("/api/demo/ingest")
+    async def unified_ingest(body: UnifiedIngestRequest) -> dict[str, Any]:
+        source_type = body.source_type.strip().lower()
+        source_value = body.source_value.strip()
+        if not source_value:
+            raise HTTPException(
+                status_code=400,
+                detail={"ok": False, "error": "source_value is required"},
+            )
+
+        if source_type == "feishu":
+            response = st.ingest_feishu_doc_schedules(
+                document_id_or_url=source_value,
+                timezone=body.timezone,
+                mode=body.mode,
+                sync_feishu_calendar=body.sync_feishu_calendar,
+                feishu_calendar_id=body.feishu_calendar_id,
+                db_path=resolved_db_path,
+            )
+        elif source_type == "markdown":
+            path = (
+                source_value
+                if Path(source_value).expanduser().exists()
+                else _write_temp_input(source_value, ".md")
+            )
+            response = st.ingest_markdown_schedules(
+                file_path=path,
+                timezone=body.timezone,
+                mode=body.mode,
+                sync_feishu_calendar=body.sync_feishu_calendar,
+                feishu_calendar_id=body.feishu_calendar_id,
+                db_path=resolved_db_path,
+            )
+        elif source_type == "chat":
+            path = (
+                source_value
+                if Path(source_value).expanduser().exists()
+                else _write_temp_input(source_value, ".txt")
+            )
+            response = st.ingest_chat_schedules(
+                file_path=path,
+                timezone=body.timezone,
+                mode=body.mode,
+                sync_feishu_calendar=body.sync_feishu_calendar,
+                feishu_calendar_id=body.feishu_calendar_id,
+                db_path=resolved_db_path,
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "ok": False,
+                    "error": "source_type must be one of: feishu, markdown, chat",
+                },
+            )
+
         payload = _decode_tool_response(response)
         if not payload.get("ok"):
             raise HTTPException(status_code=400, detail=payload)

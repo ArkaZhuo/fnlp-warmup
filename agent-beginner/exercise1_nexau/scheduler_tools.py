@@ -36,7 +36,12 @@ DATETIME_TOKEN_PATTERN = re.compile(
 )
 
 TIME_RANGE_PATTERN = re.compile(r"(\d{1,2}:\d{2})\s*[-~到]\s*(\d{1,2}:\d{2})")
+LEADING_FILLER_PATTERN = re.compile(r"^(?:咱们|我们|安排|约一下|约个|请|麻烦|帮我|帮忙)\s+")
 BULLET_PREFIX_PATTERN = re.compile(r"^\s*(?:[-*+]\s*(?:\[[xX ]\]\s*)?|\d+[\.)]\s*)")
+CHAT_PREFIX_PATTERN = re.compile(
+    r"^\s*\[(?P<timestamp>\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)\]\s*"
+    r"(?:(?P<speaker>[^:：]{1,30})[:：]\s*)?(?P<body>.*)$"
+)
 
 WEEKDAY_MAP = {
     "一": 0,
@@ -150,7 +155,11 @@ def _to_utc_iso(dt: datetime) -> str:
     return dt.astimezone(UTC).replace(microsecond=0).isoformat()
 
 
-def _parse_datetime(value: str, timezone: str = DEFAULT_TIMEZONE) -> datetime:
+def _parse_datetime(
+    value: str,
+    timezone: str = DEFAULT_TIMEZONE,
+    reference_dt: datetime | None = None,
+) -> datetime:
     if not value or not value.strip():
         raise ValueError("datetime value is required")
 
@@ -173,7 +182,10 @@ def _parse_datetime(value: str, timezone: str = DEFAULT_TIMEZONE) -> datetime:
     # Relative shortcuts: 今天/明天/后天 HH:MM
     rel_match = re.match(r"^(今天|明天|后天)\s*(\d{1,2}):(\d{2})$", raw)
     if rel_match:
-        base = datetime.now(tz).replace(second=0, microsecond=0)
+        base = (reference_dt.astimezone(tz) if reference_dt else datetime.now(tz)).replace(
+            second=0,
+            microsecond=0,
+        )
         day_token, hour_s, minute_s = rel_match.groups()
         offset = {"今天": 0, "明天": 1, "后天": 2}[day_token]
         return (base + timedelta(days=offset)).replace(hour=int(hour_s), minute=int(minute_s))
@@ -182,7 +194,10 @@ def _parse_datetime(value: str, timezone: str = DEFAULT_TIMEZONE) -> datetime:
     next_week_match = re.match(r"^下周([一二三四五六日天])\s*(\d{1,2}):(\d{2})$", raw)
     if next_week_match:
         weekday_cn, hour_s, minute_s = next_week_match.groups()
-        base = datetime.now(tz).replace(second=0, microsecond=0)
+        base = (reference_dt.astimezone(tz) if reference_dt else datetime.now(tz)).replace(
+            second=0,
+            microsecond=0,
+        )
         target_wday = WEEKDAY_MAP[weekday_cn]
         current_wday = base.weekday()
         days_until = (target_wday - current_wday + 7) % 7
@@ -191,7 +206,7 @@ def _parse_datetime(value: str, timezone: str = DEFAULT_TIMEZONE) -> datetime:
         return target.replace(hour=int(hour_s), minute=int(minute_s))
 
     # Common formats
-    now_local = datetime.now(tz)
+    now_local = reference_dt.astimezone(tz) if reference_dt else datetime.now(tz)
     patterns = [
         ("%Y-%m-%d %H:%M", True),
         ("%Y/%m/%d %H:%M", True),
@@ -687,14 +702,49 @@ def schedule_delete(
         return _tool_response({"ok": False, "error": str(exc)}, "Failed to delete event")
 
 
-def _clean_title(line: str, datetime_token: str) -> str:
-    title = line.strip()
-    title = BULLET_PREFIX_PATTERN.sub("", title)
-    title = title.replace(datetime_token, " ")
-    title = TIME_RANGE_PATTERN.sub(" ", title)
+def _remove_text_spans(text: str, spans: list[tuple[int, int]]) -> str:
+    if not spans:
+        return text
+
+    merged: list[list[int]] = []
+    for start, end in sorted(spans):
+        if start >= end:
+            continue
+        if not merged or start > merged[-1][1]:
+            merged.append([start, end])
+        else:
+            merged[-1][1] = max(merged[-1][1], end)
+
+    chunks: list[str] = []
+    cursor = 0
+    for start, end in merged:
+        chunks.append(text[cursor:start])
+        cursor = end
+    chunks.append(text[cursor:])
+    return "".join(chunks)
+
+
+def _clean_title(content: str, remove_spans: list[tuple[int, int]] | None = None) -> str:
+    title = _remove_text_spans(content, remove_spans or [])
     title = title.replace("|", " ")
+    title = LEADING_FILLER_PATTERN.sub("", title)
+    title = re.sub(r"\s+", " ", title)
     title = title.strip(" -—:：\t")
     return title.strip()
+
+
+def _strip_chat_prefix(line: str, timezone: str) -> tuple[str, datetime | None]:
+    match = CHAT_PREFIX_PATTERN.match(line)
+    if not match:
+        return line, None
+
+    timestamp = match.group("timestamp")
+    body = match.group("body") or ""
+    try:
+        reference_dt = _parse_datetime(timestamp, timezone)
+    except Exception:
+        reference_dt = None
+    return body.strip(), reference_dt
 
 
 def _extract_event_from_line(
@@ -702,18 +752,25 @@ def _extract_event_from_line(
     line_no: int,
     timezone: str,
     default_duration_minutes: int,
+    strip_chat_prefix: bool = False,
 ) -> dict[str, Any] | None:
     if not line.strip():
         return None
 
-    dt_match = DATETIME_TOKEN_PATTERN.search(line)
+    content = line.strip()
+    reference_dt = None
+    if strip_chat_prefix:
+        content, reference_dt = _strip_chat_prefix(line, timezone)
+    content = BULLET_PREFIX_PATTERN.sub("", content).strip()
+
+    dt_match = DATETIME_TOKEN_PATTERN.search(content)
     if not dt_match:
         return None
 
     start_token = dt_match.group(1)
-    start_dt = _parse_datetime(start_token, timezone)
+    start_dt = _parse_datetime(start_token, timezone, reference_dt=reference_dt)
 
-    range_match = TIME_RANGE_PATTERN.search(line)
+    range_match = TIME_RANGE_PATTERN.search(content)
     if range_match:
         end_hm = range_match.group(2)
         end_dt = start_dt.replace(
@@ -727,13 +784,17 @@ def _extract_event_from_line(
     else:
         end_dt = start_dt + timedelta(minutes=max(default_duration_minutes, 1))
 
-    title = _clean_title(line, start_token)
+    remove_spans = [dt_match.span()]
+    if range_match:
+        remove_spans.append(range_match.span())
+
+    title = _clean_title(content, remove_spans=remove_spans)
     if not title:
         title = f"未命名日程(line {line_no})"
 
     return {
         "title": title,
-        "description": line.strip(),
+        "description": content.strip(),
         "start_dt": start_dt,
         "end_dt": end_dt,
         "line_no": line_no,
@@ -784,6 +845,7 @@ def _ingest_text(
     app_id: str | None,
     app_secret: str | None,
     feishu_base_url: str,
+    strip_chat_prefix: bool,
     db_path: str | None,
 ) -> dict[str, str]:
     tz_name = _normalize_timezone(timezone)
@@ -802,7 +864,13 @@ def _ingest_text(
     with _connect(db_path) as conn:
         lines = text.splitlines()
         for idx, line in enumerate(lines, start=1):
-            candidate = _extract_event_from_line(line, idx, tz_name, default_duration_minutes)
+            candidate = _extract_event_from_line(
+                line,
+                idx,
+                tz_name,
+                default_duration_minutes,
+                strip_chat_prefix=strip_chat_prefix,
+            )
             if not candidate:
                 continue
 
@@ -1321,6 +1389,7 @@ def ingest_markdown_schedules(
             app_id=app_id,
             app_secret=app_secret,
             feishu_base_url=feishu_base_url,
+            strip_chat_prefix=False,
             db_path=db_path,
         )
     except Exception as exc:
@@ -1358,6 +1427,7 @@ def ingest_chat_schedules(
             app_id=app_id,
             app_secret=app_secret,
             feishu_base_url=feishu_base_url,
+            strip_chat_prefix=True,
             db_path=db_path,
         )
     except Exception as exc:
@@ -1401,6 +1471,7 @@ def ingest_feishu_markdown_schedules(
             app_id=app_id,
             app_secret=app_secret,
             feishu_base_url=feishu_base_url,
+            strip_chat_prefix=False,
             db_path=db_path,
         )
     except Exception as exc:
@@ -1470,6 +1541,7 @@ def ingest_feishu_doc_schedules(
             app_id=resolved_app_id,
             app_secret=resolved_app_secret,
             feishu_base_url=feishu_base_url,
+            strip_chat_prefix=False,
             db_path=db_path,
         )
     except Exception as exc:

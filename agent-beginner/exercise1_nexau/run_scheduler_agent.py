@@ -8,27 +8,52 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
 from nexau import Agent, AgentConfig, LLMConfig, Tool
-
-from scheduler_tools import (
-    DEFAULT_DB_PATH,
-    DEFAULT_FEISHU_BASE_URL,
-    DEFAULT_TIMEZONE,
-    ingest_chat_schedules,
-    ingest_feishu_doc_schedules,
-    ingest_feishu_markdown_schedules,
-    ingest_markdown_schedules,
-    init_db,
-    schedule_create,
-    schedule_delete,
-    schedule_query,
-    schedule_update,
+from nexau.archs.main_sub.execution.hooks import (
+    AfterModelHookInput,
+    AfterModelHookResult,
+    AfterToolHookInput,
+    AfterToolHookResult,
+    HookResult,
 )
+
+try:
+    from .scheduler_tools import (
+        DEFAULT_DB_PATH,
+        DEFAULT_FEISHU_BASE_URL,
+        DEFAULT_TIMEZONE,
+        ingest_chat_schedules,
+        ingest_feishu_doc_schedules,
+        ingest_feishu_markdown_schedules,
+        ingest_markdown_schedules,
+        init_db,
+        schedule_create,
+        schedule_delete,
+        schedule_query,
+        schedule_update,
+    )
+except ImportError:  # pragma: no cover - keeps direct script execution working
+    from scheduler_tools import (
+        DEFAULT_DB_PATH,
+        DEFAULT_FEISHU_BASE_URL,
+        DEFAULT_TIMEZONE,
+        ingest_chat_schedules,
+        ingest_feishu_doc_schedules,
+        ingest_feishu_markdown_schedules,
+        ingest_markdown_schedules,
+        init_db,
+        schedule_create,
+        schedule_delete,
+        schedule_query,
+        schedule_update,
+    )
 
 try:
     from dotenv import load_dotenv
@@ -36,12 +61,149 @@ except ImportError:  # pragma: no cover
     load_dotenv = None
 
 
+def _load_local_env(base_dir: Path) -> None:
+    if load_dotenv is None:
+        return
+
+    candidates = [
+        base_dir.parent / ".env",
+        base_dir / ".env",
+    ]
+    loaded_any = False
+    for candidate in candidates:
+        if candidate.exists():
+            load_dotenv(candidate, override=False)
+            loaded_any = True
+
+    if not loaded_any:
+        load_dotenv()
+
+
 def _now_string(timezone: str) -> str:
     tz = ZoneInfo(timezone)
     return datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _build_agent(base_dir: Path, timezone: str, db_path: str) -> Agent:
+def _format_preview_value(value: Any, limit: int = 80) -> str:
+    text = str(value).replace("\n", " ").strip()
+    if len(text) > limit:
+        return text[:limit] + "..."
+    return text
+
+
+def _format_tool_input_preview(tool_input: dict[str, Any], limit: int = 3) -> str:
+    if not tool_input:
+        return ""
+
+    parts: list[str] = []
+    for index, (key, value) in enumerate(tool_input.items()):
+        if index >= limit:
+            parts.append("...")
+            break
+        parts.append(f"{key}={_format_preview_value(value)}")
+    return ", ".join(parts)
+
+
+def _extract_tool_payload(tool_output: Any) -> dict[str, Any] | None:
+    if not isinstance(tool_output, dict):
+        return None
+
+    content = tool_output.get("content")
+    if not isinstance(content, str):
+        return None
+
+    try:
+        payload = json.loads(content)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _summarize_tool_payload(tool_name: str, payload: dict[str, Any] | None) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+
+    if payload.get("ok") is False:
+        return payload.get("error") or payload.get("message") or "执行失败"
+
+    event = payload.get("event")
+    if isinstance(event, dict):
+        title = event.get("title")
+        event_id = event.get("id")
+        parts = []
+        if title:
+            parts.append(f"title={title}")
+        if event_id:
+            parts.append(f"event_id={event_id}")
+        return ", ".join(parts) if parts else None
+
+    if tool_name == "schedule_query":
+        return f"count={payload.get('count', 0)}"
+
+    if any(key in payload for key in ("created_count", "updated_count", "skipped_count")):
+        return (
+            f"新增={payload.get('created_count', 0)}, "
+            f"更新={payload.get('updated_count', 0)}, "
+            f"跳过={payload.get('skipped_count', 0)}"
+        )
+
+    if "db_path" in payload:
+        return f"db_path={payload['db_path']}"
+
+    return None
+
+
+def _build_trace_hooks(
+    trace_callback: Callable[[str], None],
+) -> tuple[list[Callable[..., Any]], list[Callable[..., Any]], list[Callable[..., Any]]]:
+    def emit(message: str) -> None:
+        try:
+            trace_callback(message)
+        except Exception:
+            pass
+
+    def after_model_hook(hook_input: AfterModelHookInput) -> AfterModelHookResult:
+        parsed = hook_input.parsed_response
+        if parsed and parsed.tool_calls:
+            names: list[str] = []
+            for call in parsed.tool_calls:
+                preview = _format_tool_input_preview(getattr(call, "tool_input", {}) or {})
+                if preview:
+                    names.append(f"{call.tool_name}({preview})")
+                else:
+                    names.append(call.tool_name)
+            emit("Agent 计划调用工具: " + " -> ".join(names))
+        return AfterModelHookResult.no_changes()
+
+    def before_tool_hook(hook_input) -> HookResult:
+        preview = _format_tool_input_preview(hook_input.tool_input)
+        if preview:
+            emit(f"正在调用工具 {hook_input.tool_name}({preview})")
+        else:
+            emit(f"正在调用工具 {hook_input.tool_name}")
+        return HookResult.no_changes()
+
+    def after_tool_hook(hook_input: AfterToolHookInput) -> AfterToolHookResult:
+        payload = _extract_tool_payload(hook_input.tool_output)
+        status = "完成"
+        if isinstance(payload, dict) and payload.get("ok") is False:
+            status = "失败"
+        summary = _summarize_tool_payload(hook_input.tool_name, payload)
+        if summary:
+            emit(f"工具 {hook_input.tool_name} {status} | {summary}")
+        else:
+            emit(f"工具 {hook_input.tool_name} {status}")
+        return AfterToolHookResult.no_changes()
+
+    return [after_model_hook], [before_tool_hook], [after_tool_hook]
+
+
+def _build_agent(
+    base_dir: Path,
+    timezone: str,
+    db_path: str,
+    trace_callback: Callable[[str], None] | None = None,
+) -> Agent:
     tool_dir = base_dir / "tools"
 
     tools = [
@@ -100,6 +262,12 @@ def _build_agent(base_dir: Path, timezone: str, db_path: str) -> Agent:
         max_tokens=int(os.getenv("LLM_MAX_TOKENS", "2048")),
     )
 
+    after_model_hooks = None
+    before_tool_hooks = None
+    after_tool_hooks = None
+    if trace_callback is not None:
+        after_model_hooks, before_tool_hooks, after_tool_hooks = _build_trace_hooks(trace_callback)
+
     config = AgentConfig(
         name="exercise1_schedule_assistant",
         max_context_tokens=100000,
@@ -108,6 +276,9 @@ def _build_agent(base_dir: Path, timezone: str, db_path: str) -> Agent:
         tool_call_mode="structured",
         llm_config=llm_config,
         tools=tools,
+        after_model_hooks=after_model_hooks,
+        before_tool_hooks=before_tool_hooks,
+        after_tool_hooks=after_tool_hooks,
     )
 
     return Agent(config=config)
@@ -131,8 +302,7 @@ def main() -> None:
     parser.add_argument("--db-path", type=str, default=os.getenv("SCHEDULE_DB_PATH", str(DEFAULT_DB_PATH)))
     args = parser.parse_args()
 
-    if load_dotenv is not None:
-        load_dotenv()
+    _load_local_env(Path(__file__).parent.resolve())
 
     _assert_env()
 

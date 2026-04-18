@@ -1,7 +1,0 @@
-run_name,model_name,loss_name,optimizer,lr,best_val_acc,test_acc
-exp_01_cnn_ce_adam_lr0.001,cnn,ce,adam,0.001,0.37749120750293086,0.40102750075551524
-exp_02_cnn_ce_adam_lr0.0005,cnn,ce,adam,0.0005,0.3704572098475967,0.3871260199456029
-exp_03_rnn_ce_adam_lr0.001,rnn,ce,adam,0.001,0.38335287221570924,0.40042308854638864
-exp_04_rnn_ce_adam_lr0.0005,rnn,ce,adam,0.0005,0.3563892145369285,0.376548806285887
-exp_05_transformer_ce_adam_lr0.001,transformer,ce,adam,0.001,0.369284876905041,0.3946811725596857
-exp_06_transformer_ce_adam_lr0.0005,transformer,ce,adam,0.0005,0.34349355216881594,0.35086128739800543
