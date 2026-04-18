@@ -1,107 +1,235 @@
-基础说明
-- 要求同学态度端正、积极进取，会使用搜索引擎和 AI 查询资料
-- 每个练习都没有具体的要求，需要同学自行积极思考、设计探究的实验内容
+# pytorch
 
-Task-1：基于机器学习的文本分类
-原始任务：https://github.com/FudanNLP/nlp-beginner task-1
-修订：@王子乐 @郑逸宁 
-前置条件
-- 学习《神经网络与深度学习》至63页，重点关注第三章3.1、3.2、3.3的内容
-- 阅读 文本分类
+这个目录是 `nlp-beginner` 相关任务的 PyTorch 实现，当前包含三个部分：
 
-代码实现阶段
+- `src/task1/`：基于手写线性分类器的文本分类
+- `src/task2/`：基于 CNN / RNN / Transformer 的深度文本分类
+- `src/task3/`：Transformer 基础结构与两个生成任务
 
-0.准备阶段
-- 在本地配置 python 环境（推荐同时安装 Jupyter Notebook）或使用 https://www.kaggle.com 的在线 IDE
-- 学习 pytorch 库中向量与矩阵运算部分的基本操作（这里 pytorch 只是作为 numpy 的替代，只执行基本的线性代数操作，并不允许直接调用 pytorch 中实现完毕的神经网络函数）
-1.数据的下载与读取
-- kaggle 提供的 文本情感分类数据集 存在一定缺陷（如数据量过于庞大、数据情感分布极度不均匀）不作重点关注，建议重点关注调整后的数据集（new_train.tsv 、 new_test.tsv ）作为训练集与测试集。
-- 推荐使用 panda 库用来对 tsv 文件进行读写操作。
-2.数据集的预处理与划分
-比较常见的划分方式是将数据划为训练集、验证集、测试集三个部分。模型利用训练集进行训练，在测试集上验证模型的正确性，训练完毕后在测试集上运行。sklearn.model_selection 库中的 train_test_split 函数可以很轻松地完成这个任务。
-接下来将测试集的句子转换为向量，即实现 Bag of Word 或者 N-gram 。
-3.模型的训练
-- 基本上就是将《神经网络与深度学习》3.3章上的公式 2.2 与3.4 章的 mini-batch 结合起来，比较考验代码能力。
-- 需要注意不能直接调用 torch.nn 中的函数。
-- 代码实现的时候应当有意识地利用 pytorch的矩阵操作同时对一整个 batch 进行操作，可以显著提升代码运行速度。
-- 推荐在执行完固定次数的操作后通过输出模型的 loss、在验证集上的正确率等数据来监测模型的训练成果。
-- 训练完毕后在测试集上运行一遍查看模型的训练成果。
+这里只保留代码运行说明，不包含报告相关内容。
 
-实验阶段
-- 测试 Bag of Word 与 N-gram 的性能差异
-- 测试不同的损失函数、学习率对最终分类性能的影响
-- 将结果绘制成图表（可自行学习 python 画图操作）
+## 环境准备
 
-调整后的数据集
-1. 训练数据和测试数据中仅保留拆分前的完整影评
-2. 用大语言模型重新打分 0-4，更新了训练数据和测试数据的全部标签（注意：不能使用测试数据参与训练，如果需要验证集可以从训练数据中进行划分）
-3. 共有 8528 条训练数据，3309 条测试数据
-暂时无法在飞书文档外展示此内容
-暂时无法在飞书文档外展示此内容
+先进入目录：
 
-Task-2：基于深度学习的文本分类
-原始任务：https://github.com/FudanNLP/nlp-beginner task-2
-修订：@王子乐 @郑逸宁 
-前置条件
-- 学习《神经网络与深度学习》至第六章，重点关注第五章 “卷积神经网络” 、第六章 “循环神经网络” 部分
-- 阅读论文 Convolutional Neural Networks for Sentence Classification https://arxiv.org/abs/1408.5882
-- 学习 word embedding、dropout 的基本思想及操作
+```bash
+cd /home/df_05/A_fnlp/pytorch
+```
 
-代码实现阶段
+建议使用当前环境：
 
-0.准备阶段
-- 学习 pytorch 库的基本操作，重点关注embedding 及 CNN 的部分，及使用 GPU （cuda）的基本操作。
-- Task 2不要求实现太多具体的东西，核心部分都是调库。
+```bash
+conda activate nlp
+```
 
-1.数据的下载与读取
-- 同 Task-1 。
+默认数据文件已经放在：
 
-2.数据的预处理与划分
-- 数据集的划分同 同 Task-1 。
-- 将句子转换为序列后直接调用 torch.nn.embedding 即可完成 embedding 操作。
+```text
+data/new_train.tsv
+data/new_test.tsv
+data/task3/add_train.tsv
+data/task3/add_test.tsv
+data/task3/lm_corpus.txt
+```
 
-3.模型的训练
-- 调用 pytorch 关于 CNN 的库函数即可完成。
-- 注意应将模型大多数操作转移到 GPU 上运行提升训练速度。
+## Task 1：传统文本分类
 
-实验阶段
+### 1. 训练
 
-- 测试不同的损失函数、学习率对最终分类性能的影响
-- 测试卷积核个数、大小及不同的优化器对最终分类性能的影响
-- 测试使用 glove 预训练的embedding进行初始化 https://nlp.stanford.edu/projects/glove/ 对最终分类性能的影响
-- 测试 CNN 改为 RNN 、Transformer （直接调用 pytorch 中的 api）等其它模型对最终分类性能的影响
-- 将结果绘制成图表
+Bag-of-Words + 交叉熵：
 
-Task-3：实现 Transformer 的基础结构
-编写：@王子乐 @郑逸宁 
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task1/train.py \
+  --feature-mode bow \
+  --loss ce \
+  --epochs 8 \
+  --save-dir outputs/task1 \
+  --run-name task1_bow_ce
+```
 
-前置条件
-- 阅读论文 《Attention Is All You Need》https://arxiv.org/abs/1706.03762
-- 推荐观看视频 Transformer论文逐段精读【论文精读】
-- 论文中没有详细讲解仍需进一步了解的知识点：
-  - batch norm、layer norm、残差连接等操作；
-  - padding mask 与 subsequent mask；
+N-gram + MSE：
 
-代码实现阶段
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task1/train.py \
+  --feature-mode ngram \
+  --ngram-n 2 \
+  --loss mse \
+  --epochs 8 \
+  --save-dir outputs/task1 \
+  --run-name task1_ngram_mse
+```
 
-1.数据的准备载与读取
-- 自己生成
+### 2. 评估一个已有训练结果
 
-2.数据的预处理与划分
-- 需要自行设计不同的实验验证模型的泛化性
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task1/eval.py \
+  --run-dir outputs/task1/task1_bow_ce
+```
 
-3.模型的训练
-- PyTorch 中标准的 Transformer 实现大概分成以下模块：
-  - MultiheadAttention、TransformerEncoderLayer/TransformerDecoderLayer 、TransformerEncoder/TransformerDecoder，
-  - 其中 N 个 TransformerEncoderLayer  堆积成 TransformerEncoder，N 个TransformerDecoderLayer 堆积成 TransformerDecoder，最后的 Transformer 类将这些组件连接起来组成完整的模型。以该框架实现可以使代码逻辑更加清晰。
-- 注意 Transformer 的训练和测试一般使用的是不同逻辑。训练时一般对一整个句子同时进行训练，而测试时一般使用 predict next token 的逻辑。
+### 3. 批量实验
 
-实验阶段
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task1/experiments.py \
+  --feature-modes bow,ngram \
+  --losses ce,mse \
+  --lrs 0.5,0.2 \
+  --epochs 8 \
+  --save-dir outputs/task1
+```
 
-- 测试不同参数对模型训练效果的影响
-- 在每个子任务中尝试 decoder-only 等 Transformer 模型变种
-- 子任务1：自行构造数据让模型学习 3+3/3+4/4+3/3+5/5+3/4+4 等的多位数加法（"3+3" 指3位数+3位数）
-  - 注意尝试不同的训练/测试集划分，探究模型的泛化性
-- 子任务2：自行构造数据让模型学习一个语言模型（自己准备一个语料集）
-  - 可以选择不同的 Tokenizer 和不同的词表大小
-- 将结果绘制成图表
+## Task 2：深度学习文本分类
+
+### 1. 训练 CNN
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task2/train.py \
+  --model-name cnn \
+  --loss-name ce \
+  --optimizer adam \
+  --epochs 8 \
+  --save-dir outputs/task2 \
+  --run-name task2_cnn
+```
+
+### 2. 训练 RNN
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task2/train.py \
+  --model-name rnn \
+  --loss-name ce \
+  --optimizer adam \
+  --epochs 8 \
+  --save-dir outputs/task2 \
+  --run-name task2_rnn
+```
+
+### 3. 训练 Transformer
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task2/train.py \
+  --model-name transformer \
+  --loss-name ce \
+  --optimizer adam \
+  --epochs 8 \
+  --save-dir outputs/task2 \
+  --run-name task2_transformer
+```
+
+### 4. 使用 GloVe 初始化词向量
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task2/train.py \
+  --model-name cnn \
+  --glove-path data/glove/glove.6B.50d.txt \
+  --embed-dim 50 \
+  --freeze-embedding \
+  --epochs 8 \
+  --save-dir outputs/task2 \
+  --run-name task2_cnn_glove
+```
+
+### 5. 批量实验
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task2/experiments.py \
+  --models cnn,rnn,transformer \
+  --losses ce,mse \
+  --optimizers adam,sgd \
+  --lrs 0.001,0.0005 \
+  --epochs 4 \
+  --save-dir outputs/task2
+```
+
+## Task 3：Transformer 基础结构
+
+### 1. 生成加法数据
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/data_gen.py add \
+  --train-out data/task3/add_train.tsv \
+  --test-out data/task3/add_test.tsv \
+  --num-train 12000 \
+  --num-test 2000 \
+  --train-pairs "3+3,3+4,4+3" \
+  --test-pairs "3+5,5+3,4+4"
+```
+
+### 2. 训练 Seq2Seq 加法模型
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/train_addition.py \
+  --train-tsv data/task3/add_train.tsv \
+  --test-tsv data/task3/add_test.tsv \
+  --epochs 12 \
+  --reverse-src \
+  --save-dir outputs/task3 \
+  --run-name task3_addition
+```
+
+### 3. 做一次推理
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/infer.py \
+  --run-dir outputs/task3/task3_addition \
+  --expr "123+456"
+```
+
+### 4. 批量超参数实验
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/experiments.py \
+  --train-tsv data/task3/add_train.tsv \
+  --test-tsv data/task3/add_test.tsv \
+  --d-models 64,128 \
+  --nheads 2,4 \
+  --epochs 8 \
+  --save-dir outputs/task3
+```
+
+### 5. 训练 decoder-only 加法模型
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/train_addition_decoder.py \
+  --train-tsv data/task3/add_train.tsv \
+  --test-tsv data/task3/add_test.tsv \
+  --epochs 12 \
+  --save-dir outputs/task3 \
+  --run-name task3_addition_decoder
+```
+
+### 6. 生成语言模型语料
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/data_gen.py lm \
+  --train-tsv data/new_train.tsv \
+  --out-path data/task3/lm_corpus.txt \
+  --max-sentences 5000
+```
+
+### 7. 训练 decoder-only 语言模型
+
+```bash
+/home/df_05/anaconda3/envs/nlp/bin/python src/task3/train_lm.py \
+  --corpus-path data/task3/lm_corpus.txt \
+  --epochs 8 \
+  --save-dir outputs/task3 \
+  --run-name task3_lm
+```
+
+## 输出目录
+
+训练结果默认会写到：
+
+```text
+outputs/task1/
+outputs/task2/
+outputs/task3/
+```
+
+每次训练通常会产出：
+
+- `best_model.pt`
+- `config.json`
+- `metrics.json`
+- `history.csv`
+- 训练曲线图片

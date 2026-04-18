@@ -17,6 +17,12 @@
 
 ## 环境变量
 
+建议统一先进入目录：
+
+```bash
+cd /home/df_05/A_fnlp/agent-beginner
+```
+
 最少需要：
 
 ```bash
@@ -42,7 +48,7 @@ export MULTI_MODAL_LLM_API_KEY="<vision_api_key>"
 ### 1) 生成 markdown v1（不生成 html）
 
 ```bash
-python -m exercise2_nexdr.run_exercise2 \
+/home/df_05/anaconda3/envs/nlp/bin/python -m exercise2_nexdr.run_exercise2 \
   --query "How to improve RAG factuality in production?" \
   --inputs "exercise2_nexdr/samples/sample_notes.md,exercise2_nexdr/samples/sample_pdf.pdf,exercise2_nexdr/samples/sample_image.png" \
   --output_dir "exercise2_nexdr/workspaces/demo_v1"
@@ -51,12 +57,21 @@ python -m exercise2_nexdr.run_exercise2 \
 ### 2) 用户编辑 markdown 后做迭代修订（输出 v2）
 
 ```bash
-python -m exercise2_nexdr.run_exercise2 \
+/home/df_05/anaconda3/envs/nlp/bin/python -m exercise2_nexdr.run_exercise2 \
   --query "How to improve RAG factuality in production?" \
   --inputs "exercise2_nexdr/samples/sample_notes.md" \
   --edited_markdown "exercise2_nexdr/samples/user_edited_markdown.md" \
   --user_instruction "Add a practical deployment checklist and risk controls section." \
   --output_dir "exercise2_nexdr/workspaces/demo_v2"
+```
+
+## 测试命令
+
+```bash
+cd /home/df_05/A_fnlp/agent-beginner
+/home/df_05/anaconda3/envs/nlp/bin/python -m unittest exercise2_nexdr.tests.test_diff_parser
+/home/df_05/anaconda3/envs/nlp/bin/python -m unittest exercise2_nexdr.tests.test_multimodal_ingestor
+/home/df_05/anaconda3/envs/nlp/bin/python -m unittest exercise2_nexdr.tests.test_semantic_scholar_rank
 ```
 
 ## 输出文件
